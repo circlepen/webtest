@@ -1,0 +1,41 @@
+version: '3'
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: always
+    ports:
+      - '8000:8000'
+    environment:
+      - GIN_MODE=release
+      - TZ=Asia/Taipei
+    env_file:
+    - ./app.env
+    depends_on:
+      - mongodb
+    networks:
+      - dockerdev
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    env_file:
+      - ./app.env
+
+    ports:
+      - '6000:27017'
+    volumes:
+      - mongodb:/data/db
+    networks:
+      - dockerdev
+
+
+volumes:
+  mongodb:
+
+networks:
+  dockerdev:
+    driver: bridge
