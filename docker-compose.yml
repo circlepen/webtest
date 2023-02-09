@@ -1,4 +1,4 @@
-version: '3'
+version: '3.9'
 services:
   app:
     container_name: app
@@ -9,14 +9,16 @@ services:
     ports:
       - '8000:8000'
     environment:
-      - GIN_MODE=release
-      - TZ=Asia/Taipei
-    env_file:
-    - ./app.env
-    depends_on:
+      MONGODB.DBHOST: "mongodb:27017"
+      MONGODB.DBUSER: "root"
+      MONGODB.DBPASSWORD: "password123"
+    external_links:
       - mongodb
     networks:
       - dockerdev
+    volumes:
+      - ./resources:/app/resources
+      - .:/app
 
   mongodb:
     image: mongo
@@ -24,9 +26,8 @@ services:
     restart: always
     env_file:
       - ./app.env
-
     ports:
-      - '6000:27017'
+      - '27017:27017'
     volumes:
       - mongodb:/data/db
     networks:

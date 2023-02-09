@@ -4,8 +4,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/circlepen/webtest/config"
 	"github.com/gin-gonic/gin"
@@ -58,6 +60,9 @@ func main() {
 
 	defer mongoclient.Disconnect(ctx)
 
+	f, _ := os.Create("gin.log")
+	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
+
 	router := server.Group("/api")
 
 	router.GET("/healthchecker", func(ctx *gin.Context) {
@@ -82,13 +87,24 @@ func main() {
 
 	router.POST("/upload", func(c *gin.Context) {
 		form, _ := c.MultipartForm()
-		files := form.File["upload[]"]
+		files := form.File["file[]"]
+		log.Println(form)
 
 		for _, file := range files {
 			log.Println(file.Filename)
-			c.SaveUploadedFile(file, "/Users/yijulai/Documents/cienet/golang/webtest/resources/"+file.Filename)
+			c.SaveUploadedFile(file, "/app/resources/"+file.Filename)
 		}
 		c.String(http.StatusOK, "Uploaded...")
+	})
+
+	router.GET("/upload/:name", func(c *gin.Context) {
+		name := c.Param("name")
+		file := "./resources/" + name
+		c.File(file)
+	})
+
+	router.GET("/upload", func(c *gin.Context) {
+		c.String(http.StatusOK, "uploaded files list")
 	})
 
 	log.Fatal(server.Run(":" + config.Port))
