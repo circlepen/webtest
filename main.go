@@ -51,6 +51,32 @@ func init() {
 	server = gin.Default()
 }
 
+func Healthcheck(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "message": "ok"})
+}
+
+func PostFiles(c *gin.Context) {
+	form, _ := c.MultipartForm()
+	files := form.File["file[]"]
+	log.Println(form)
+
+	for _, file := range files {
+		log.Println(file.Filename)
+		c.SaveUploadedFile(file, "/app/resources/"+file.Filename)
+	}
+	c.String(http.StatusOK, "Uploaded...")
+}
+
+func GetFile(c *gin.Context) {
+	name := c.Param("name")
+	file := "./resources/" + name
+	c.File(file)
+}
+
+func GetFileList(c *gin.Context) {
+	c.String(http.StatusOK, "uploaded files list")
+}
+
 func main() {
 	config, err := config.LoadConfig(".")
 
@@ -65,47 +91,12 @@ func main() {
 
 	router := server.Group("/api")
 
-	router.GET("/healthchecker", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{"status": "success", "message": "ok"})
-	})
-
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-
-	router.GET("/gopher", func(c *gin.Context) {
-		c.File("./resources/gopher.png")
-	})
-
-	router.GET("/myname", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "circlepen",
-		})
-	})
-
-	router.POST("/upload", func(c *gin.Context) {
-		form, _ := c.MultipartForm()
-		files := form.File["file[]"]
-		log.Println(form)
-
-		for _, file := range files {
-			log.Println(file.Filename)
-			c.SaveUploadedFile(file, "/app/resources/"+file.Filename)
-		}
-		c.String(http.StatusOK, "Uploaded...")
-	})
-
-	router.GET("/upload/:name", func(c *gin.Context) {
-		name := c.Param("name")
-		file := "./resources/" + name
-		c.File(file)
-	})
-
-	router.GET("/upload", func(c *gin.Context) {
-		c.String(http.StatusOK, "uploaded files list")
-	})
+	{
+		router.GET("/healthchecker", Healthcheck)
+		router.POST("/upload", PostFiles)
+		router.GET("/upload/:name", GetFile)
+		router.GET("/upload", GetFileList)
+	}
 
 	log.Fatal(server.Run(":" + config.Port))
 }

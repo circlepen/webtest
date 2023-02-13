@@ -12,6 +12,11 @@ docker-compose up --build -d
 docker-compose up -d
 ```
 
+### ports
+
++ api: localhost:8000
++ mongodb: localhost:27017
+
 
 ### upload files example
 ```
